@@ -31,6 +31,15 @@ const UserSchema = new mongoose.Schema(
       type: String,
       default: 'online',
     },
+
+    blocklist: {
+      type: Array,
+      default: [],
+    },
+    blockedby: {
+      type: Array,
+      default: [],
+    },
   },
   { minimize: false }
 );

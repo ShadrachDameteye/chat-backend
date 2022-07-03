@@ -5,6 +5,7 @@ const User = require('./models/User');
 const Message = require('./models/Message');
 const rooms = ['general', 'tech', 'finance', 'crypto'];
 const cors = require('cors');
+const BlackList = require('./models/BlackList');
 
 app.use(express.urlencoded({ extended: true }));
 app.use(express.json());
@@ -92,6 +93,67 @@ io.on('connection', (socket) => {
 
 app.get('/rooms', (req, res) => {
   res.json(rooms);
+});
+
+app.post('/block', async (req, res) => {
+  console.log('user to be blocked :--' + req.body.blocked_id);
+  console.log('user who is blocking :--' + req.body.blocker_id);
+  try {
+    const { blocked_id, blocker_id } = req.body;
+    // const block = await BlackList.create({ blocked_id, blocker_id });
+
+    const user = await User.findById(blocker_id);
+    // user.blocklist = blocked_id;
+    // console.log(user.blockedby);
+    console.log(user.blockedby);
+    user.blockedby.push(blocker_id);
+    await user.save();
+
+    // await block.save();
+    console.log('successfully blocked');
+    console.log(user);
+    res.status(200).json(user);
+  } catch (e) {
+    console.log('failed to block');
+    console.log(e.message);
+    res.status(400).json(e.message);
+  }
+});
+
+app.post('/unblock', async (req, res) => {
+  try {
+    const { blocked_id, blocker_id } = req.body;
+    // const block = await BlackList.deleteOne({ blocked_id, blocker_id });
+    const user = await User.findById(blocker_id);
+    var arr = user.blockedby;
+    for (var i = 0; i < arr.length; i++) {
+      if (arr[i] === 5) {
+        arr.splice(i, 1);
+      }
+    }
+    console.log(arr);
+    user.blockedby = arr;
+    await user.save();
+    console.log('successfully unblocked');
+    res.status(200).json(user);
+  } catch (e) {
+    console.log(e);
+    res.status(400).json(e.message);
+  }
+});
+
+app.post('/check_block_status', async (req, res) => {
+  try {
+    const { blocked_id, blocker_id } = req.body;
+    const block = await BlackList.findOne({ blocked_id, blocker_id });
+    if (block) {
+      // console.log('yes');
+    }
+    res.status(200).json(block);
+  } catch (e) {
+    console.log(e);
+    res.status(400).json(e.message);
+  }
 });
 
 server.listen(PORT, () => {
